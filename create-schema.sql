@@ -1,0 +1,21 @@
+CREATE DATABASE IF NOT EXISTS bionime DEFAULT CHARACTER SET utf8;
+
+USE bionime;
+
+/* nurse */
+CREATE TABLE IF NOT EXISTS nurse (
+    id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    PRIMARY KEY (id));
+
+/* station */
+CREATE TABLE IF NOT EXISTS station (
+    id MEDIUMINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(50) NOT NULL,
+    PRIMARY KEY (id));
+    
+/* assignment */
+CREATE TABLE IF NOT EXISTS assignment (
+    nurse_id MEDIUMINT UNSIGNED NOT NULL,
+    station_id MEDIUMINT UNSIGNED NOT NULL,
+    PRIMARY KEY (nurse_id,station_id));

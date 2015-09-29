@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <!-- The jQuery library is a prerequisite for all jqSuite products -->
+  <script type="text/ecmascript" src="js/jquery/dist/jquery.min.js"></script>
+  <!-- We support more than 40 localizations -->
+  <script type="text/ecmascript" src="js/jqGrid/js/minified/i18n/grid.locale-en.js"></script>
+  <!-- This is the Javascript file of jqGrid -->
+  <script type="text/ecmascript" src="js/jqGrid/js/minified/jquery.jqGrid.min.js"></script>
+  <!-- This is the localization file of the grid controlling messages, labels, etc.
+       A link to a jQuery UI ThemeRoller theme, more than 22 built-in and many more custom -->
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/css/bootstrap.min.css">
+  <!-- The link to the CSS that the grid needs -->
+  <link rel="stylesheet" type="text/css" media="screen" href="js/jqGrid/css/ui.jqgrid-bootstrap.css" />
+  <script>
+    $.jgrid.defaults.width = 780;
+    $.jgrid.defaults.responsive = true;
+    $.jgrid.defaults.styleUI = 'Bootstrap';
+  </script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.4/js/bootstrap.min.js"></script>
+  <meta charset="UTF-8">
+  <title>護理站點管理</title>
+</head>
+
+<body>
+  <div style="margin-left:20px">
+    <table id="jqGrid"></table>
+    <div id="jqGridPager"></div>
+
+    <br />
+    <br />
+
+    <div id="detailsPlaceholder">
+      <table id="jqGridDetails"></table>
+      <div id="jqGridDetailsPager"></div>
+    </div>
+
+    <br />
+    <br />
+
+    <table id="jqGridNurse"></table>
+    <div id="jqGridPagerNurse"></div>
+
+
+  </div>
+  <script type="text/javascript">
+    var site = 'http://'+window.location.host;
+    var URL = site+'/nurse-station-api/rest/station';
+    var nurse_api_URL = site+'/nurse-station-api/rest/nurse';
+    $(document).ready(function() {
+      /*****************
+       *
+       *
+       *
+       * 護理站點清單
+       *
+       *
+       *
+       *****************/
+      $("#jqGrid").jqGrid({
+        url: URL,
+        editurl: URL,
+        //editurl: 'clientArray',
+        // we set the changes to be made at client side using predefined word clientArray
+        datatype: "json",
+        mtype: "GET",
+        colModel: [{
+          label: '站點編號',
+          name: 'id',
+          formatter: 'integer',
+          width: 75,
+          key: true,
+          editable: true,
+          editoptions: {
+            readonly: 'readonly'
+          }
+        }, {
+          label: '站點名稱',
+          name: 'name',
+          width: 140,
+          editable: true, // must set editable to true if you want to make the field editable
+          editrules: {
+            required: true
+          }
+        }, ],
+        //loadonce: true,
+        viewrecords: true,
+        height: 200,
+        rowNum: 1000,
+        pager: "#jqGridPager",
+        caption: "護理站點清單",
+        onSelectRow: function(rowid, selected) {
+          if (rowid != null) {
+            $("#jqGridDetails").jqGrid('setGridParam', {
+              url: URL + "/" + rowid + "/nurse",
+              editurl: URL + "/" + rowid + "/nurse",
+              datatype: 'json',
+            });
+            $("#jqGridDetails").jqGrid('getColProp', 'nurse_id').editoptions.dataUrl = 
+            	    URL + "/" + rowid + "/nurse-not-in";
+            var row = $(this).jqGrid('getRowData', rowid);
+            $("#jqGridDetails").jqGrid('setCaption', row.name + '值勤人員');
+            $("#jqGridDetails").jqGrid("setGridState", "visible");
+            $("#jqGridDetails").trigger("reloadGrid");
+          }
+        }, // use the onSelectRow that is triggered on row click to show a details grid
+
+      });
+
+      $('#jqGrid').navGrid('#jqGridPager',
+        // the buttons to appear on the toolbar of the grid
+        {
+          edit: true,
+          add: true,
+          del: true,
+          search: false,
+          refresh: false,
+          view: false,
+          position: "left",
+          cloneToTop: false
+        },
+        // options for the Edit Dialog
+        {
+          focusField: 1,
+          editCaption: "The Edit Dialog",
+          closeAfterEdit: true,
+          mtype: "PUT",
+          onclickSubmit: function(params, postdata) {
+            params.url = URL + '/' + postdata.id;
+            $(this).attr('data-station-name', postdata.name);
+          },
+          ajaxEditOptions: {
+            contentType: "application/json; charset=utf-8"
+          },
+          serializeEditData: function(data) {
+            delete data.oper;
+            return JSON.stringify(data);
+          },
+          afterSubmit: function(response, postdata) {
+            $("#jqGridDetails").jqGrid('setCaption', $(this).attr('data-station-name') + '值勤人員');
+            return 1;
+          },
+        },
+        // options for the Add Dialog
+        {
+          focusField: 1,
+          closeAfterAdd: true,
+          closeAfterEdit: true,
+          ajaxEditOptions: {
+            contentType: "application/json; charset=utf-8"
+          },
+          serializeEditData: function(data) {
+            delete data.oper;
+            return JSON.stringify(data);
+          },
+          mtype: "POST",
+          afterSubmit: function(response, postdata) {
+              return 1;
+            }
+            //closeAfterAdd: true,
+            //recreateForm: true,
+            /* errorTextFormat: function (data) {
+                return 'Error: ' + data.responseText
+            } */
+        },
+        // options for the Delete Dailog
+        {
+          mtype: 'DELETE',
+          serializeDelData: function() {
+            return "";
+          },
+          onclickSubmit: function(params, postdata) {
+            params.url = URL + '/' + postdata;
+          },
+          errorTextFormat: function(data) {
+            return 'Error: ' + data.responseText
+          },
+          afterComplete: function(response, postdata) {
+            $("#jqGridDetails").jqGrid('setGridParam', {
+              editurl: '',
+            });
+            $("#jqGridDetails").jqGrid('setCaption', '護理站點值勤人員');
+            $("#jqGridDetails").jqGrid("setGridState", "hidden");
+            $("#jqGridDetails").trigger("reloadGrid");
+
+          }
+        });
+
+      /*****************
+       *
+       *
+       *
+       * 護理站點負責人員
+       *
+       *
+       *
+       *****************/
+      $("#jqGridDetails").jqGrid({
+        url: '',
+        hiddengrid: true,
+        mtype: "GET",
+        datatype: "json",
+        page: 1,
+        colModel: [{
+          label: '人員編號',
+          name: 'nurse_id',
+          formatter: 'integer',
+          width: 75,
+          key: true,
+          edittype: 'select',
+          editable: true,
+          editrules: {
+            required: true
+          },
+          editoptions: {
+            dataUrl: nurse_api_URL,
+            buildSelect: function(response) {
+              var data = $.parseJSON(response);
+              s = '<select>';
+              //s+= '<option value="0">--please select a nurse';
+              $.each(data, function() {
+                s += '<option value="' + this.id + '">' + this.name + '</option>';
+              });
+              s += '</select>';
+              return s;
+            }
+          },
+        }, {
+          label: '人員姓名',
+          name: 'nurse_name',
+          width: 140,
+          editable: false, // must set editable to true if you want to make the field editable
+          editrules: {
+            required: true
+          }
+        }, ],
+        width: 780,
+        rowNum: 50,
+        //loadonce: true,
+        height: '100',
+        viewrecords: true,
+        caption: '護理站點值勤人員',
+        pager: "#jqGridDetailsPager"
+      });
+
+      var pAddOption = {
+        mtype: "POST",
+        closeAfterAdd: true,
+        closeAfterEdit: true,
+        ajaxEditOptions: {
+          contentType: "application/json; charset=utf-8"
+        },
+        serializeEditData: function(data) {
+          delete data.oper;
+          return JSON.stringify(data);
+        },
+        afterSubmit: function(response, postdata) {
+            return 1;
+          }
+          /* errorTextFormat: function (data) {
+              return 'Error: ' + data.responseText
+          } */
+      };
+      var grid = $('#jqGridDetails').navGrid('#jqGridDetailsPager',
+        // the buttons to appear on the toolbar of the grid
+        {
+          addfunc: function() {
+            var editurl = grid.getGridParam('editurl');
+            if (editurl) {
+              grid.editGridRow("new", pAddOption);
+            } else {
+              //alert('請先選擇護理站點');
+              //$.jgrid.viewModal("#alertmod", {
+              //   gbox: "#gbox_" + this.p.id,
+              //   jqm: true
+              // });
+              //$("#jqg_alrt").focus();
+            }
+          },
+          edit: false,
+          //add: true,
+          del: true,
+          search: false,
+          refresh: false,
+          view: false,
+          position: "left",
+          cloneToTop: false
+        },
+        // options for the Edit Dialog
+        {},
+        // options for the Add Dialog
+        {},
+        // options for the Delete Dialog
+        {
+          mtype: 'DELETE',
+          ajaxDelOptions: {
+            contentType: "application/json; charset=utf-8"
+          },
+          serializeDelData: function(data) {
+            delete data.oper;
+            var request = {
+              nurse_id: data.id
+            };
+            return JSON.stringify(request);
+          },
+          onclickSubmit: function(params, postdata) {
+            var editurl = grid.getGridParam('editurl');
+            params.url = editurl;
+          },
+          errorTextFormat: function(data) {
+            return 'Error: ' + data.responseText
+          }
+        }
+      );
+
+      /**************
+       *
+       *
+       *
+       * 護理人員清單
+       *
+       *
+       *
+       **************/
+      $("#jqGridNurse").jqGrid({
+        url: nurse_api_URL,
+        editurl: nurse_api_URL,
+        //editurl: 'clientArray',
+        // we set the changes to be made at client side using predefined word clientArray
+        datatype: "json",
+        mtype: "GET",
+        colModel: [{
+          label: 'ID',
+          name: 'id',
+          formatter: 'integer',
+          width: 75,
+          key: true,
+          editable: true,
+          editoptions: {
+            readonly: 'readonly'
+          }
+        }, {
+          label: 'Name',
+          name: 'name',
+          width: 140,
+          editable: true, // must set editable to true if you want to make the field editable
+          editrules: {
+            required: true
+          }
+        }, ],
+        //loadonce: true,
+        hiddengrid: true,
+        viewrecords: true,
+        height: 200,
+        rowNum: 1000,
+        pager: "#jqGridPagerNurse",
+        caption: "護理人員清單"
+      });
+
+      $('#jqGridNurse').navGrid('#jqGridPagerNurse',
+        // the buttons to appear on the toolbar of the grid
+        {
+          edit: true,
+          add: true,
+          del: true,
+          search: false,
+          refresh: false,
+          view: false,
+          position: "left",
+          cloneToTop: false
+        },
+        // options for the Edit Dialog
+        {
+          editCaption: "The Edit Dialog",
+          focusField: 1,
+          //checkOnUpdate : true,
+          //checkOnSubmit : true,
+          closeAfterEdit: true,
+          /* errorTextFormat: function (data) {
+              return 'Error: ' + data.responseText
+          }, */
+          mtype: "PUT",
+          onclickSubmit: function(params, postdata) {
+            params.url = nurse_api_URL + '/' + postdata.id;
+          },
+          ajaxEditOptions: {
+            contentType: "application/json; charset=utf-8"
+          },
+          serializeEditData: function(data) {
+            delete data.oper;
+            return JSON.stringify(data);
+          },
+          afterSubmit: function(response, postdata) {
+            $("#jqGridDetails").trigger("reloadGrid");
+            return 1;
+          }
+        },
+        // options for the Add Dialog
+        {
+          focusField: 1,
+          closeAfterAdd: true,
+          closeAfterEdit: true,
+          ajaxEditOptions: {
+            contentType: "application/json; charset=utf-8"
+          },
+          serializeEditData: function(data) {
+            delete data.oper;
+            return JSON.stringify(data);
+          },
+          mtype: "POST",
+          afterSubmit: function(response, postdata) {
+              return 1;
+            }
+            //closeAfterAdd: true,
+            //recreateForm: true,
+            /* errorTextFormat: function (data) {
+                return 'Error: ' + data.responseText
+            } */
+        },
+        // options for the Delete Dailog
+        {
+          mtype: 'DELETE',
+          serializeDelData: function() {
+            return "";
+          },
+          onclickSubmit: function(params, postdata) {
+            params.url = nurse_api_URL + '/' + postdata;
+          },
+          errorTextFormat: function(data) {
+            return 'Error: ' + data.responseText
+          },
+          afterComplete: function(response, postdata) {
+            $("#jqGridDetails").trigger("reloadGrid");
+          }
+        });
+
+
+    }); //$(document).ready
+  </script>
+
+</body>
+
+</html>
