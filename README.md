@@ -1,5 +1,5 @@
 # Demo Site
-[護理站點管理Demo頁面](http://ec2-52-26-138-212.us-west-2.compute.amazonaws.com:8080/nurse-station-api/)
+[護理站點管理Demo頁面連結](http://ec2-52-26-138-212.us-west-2.compute.amazonaws.com:8080/nurse-station-api/)
 
 ![](https://github.com/hamn07/practice-nurse-station/blob/master/Screenshot.jpg)
 # 建置說明
@@ -96,7 +96,7 @@ WebContent /Users/Hamn/Workspace/eclipse-workspace/nurse-station-api/WebContent
 nurse-station-api
 ├── index.html <-- 護理站點管理頁面
 ├── js
-│   ├── jqGrid <-- 產生前端表格的JQuery plugin
+│   ├── jqGrid <-- 產生前端表格的jQuery plugin
 │   ├── jquery
 │   └── jquery-ui
 └── WEB-INF
