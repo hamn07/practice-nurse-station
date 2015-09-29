@@ -1,8 +1,10 @@
 # Demo Site
 [護理站點管理Demo頁面](http://ec2-52-26-138-212.us-west-2.compute.amazonaws.com:8080/nurse-station-api/)
+
+![](https://github.com/hamn07/practice-nurse-station/blob/master/Screenshot.jpg)
 # 建置說明
 1. create [schema](https://github.com/hamn07/practice-nurse-station/blob/master/create-schema.sql)
-2. deploy [nurse-station-api](https://github.com/hamn07/practice-nurse-station/blob/master/nurse-station-api.war?raw=true)
+2. deploy [nurse-station-api.war](https://github.com/hamn07/practice-nurse-station/blob/master/nurse-station-api.war?raw=true)
 
 # Server配置
 **Servlet Container: Tomcat 7**
